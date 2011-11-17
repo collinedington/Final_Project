@@ -1,0 +1,121 @@
+/*=========================================================================
+
+  University of Pittsburgh Bioengineering 1351/2351
+  Final project example code
+
+  Copyright (c) 2011 by Damion Shelton
+
+  All rights reserved.
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notices for more information.
+
+=========================================================================*/
+
+#ifndef _appBase_h
+#define _appBase_h
+
+#include <iostream>
+
+#include <QImage>
+
+#include <cv.h>
+#include <highgui.h>
+
+#include "itkImage.h"
+#include "itkBinaryThresholdImageFilter.h"
+
+class FinalProjectApp : public QObject
+{
+Q_OBJECT
+
+public:
+
+  // Image typedef
+  typedef itk::Image< unsigned char, 2 > ImageType;
+  typedef itk::BinaryThresholdImageFilter<ImageType, ImageType> ThresholdType;
+
+  /** Constructor */
+  FinalProjectApp();
+
+  /** Destructor */
+  virtual ~FinalProjectApp();
+
+  /** Setup the camera connection */
+  void SetupApp();
+
+public slots:
+
+  /** Function to update the application in response to an external timer loop*/
+  void RealtimeUpdate();
+
+  /** Change from color to threshold image or vice versa */
+  void SetApplyFilter(bool useFilter);
+
+  /** Set the lower value for the threshold filter */
+  void SetThreshold(int threshold);
+
+signals:
+
+  /** Send a QImage to a receiver */
+  void SendImage(QImage image);
+
+protected:
+
+  /** Setup the connection to the webcam */
+  bool SetupCamera();
+
+  /** Disconnect from the webcam */
+  void DisconnectCamera();
+
+  /** Configure the ITK pipeline to filter the acquired image data */
+  void SetupITKPipeline();
+
+  /** Copy the acquired image data to the ITK image */
+  void CopyImageToITK();
+
+  /** Convert an unsigned char buffer containing RGB data to a QImage */
+  QImage RGBBufferToQImage(unsigned char* buffer);
+
+  /** Convert an unsigned char buffer containing monochrome data to a QImage */
+  QImage MonoBufferToQImage(unsigned char* buffer);
+
+  /** Width of the image (# columns) in pixels */
+  unsigned int m_ImageWidth;
+
+  /** Height of the image (# rows) in pixels */
+  unsigned int m_ImageHeight;
+
+  /** The number of pixels in the image */
+  unsigned int m_NumPixels;
+
+  /** OpenCV webcam capture structure */
+  CvCapture* m_OpenCVCapture;
+
+  /** Flag to indicate camera connection; true if connected */
+  bool m_ConnectedToCamera;
+
+  /** The image in OpenCV format */
+  IplImage* m_CameraImageOpenCV;
+
+  /** Buffer containing RGB data from the camera */
+  unsigned char* m_CameraFrameRGBBuffer;
+
+  /** Temporary buffer used to store RGBA data for forming a QImage */
+  unsigned char* m_TempRGBABuffer;
+
+  /** The captured image in ITK format */
+  ImageType::Pointer m_Image;
+
+  /** ITK image threshold filter */
+  ThresholdType::Pointer m_ThresholdFilter;
+
+  /** Lower threshold value in filter */
+  int m_LowerThreshold;
+
+  /** Is the filter enabled? */
+  bool m_FilterEnabled;
+};
+
+#endif
