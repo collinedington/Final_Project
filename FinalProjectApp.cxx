@@ -136,6 +136,12 @@ FinalProjectApp
       m_ThresholdFilter->Update();
 
       QImage processedImage = MonoBufferToQImage( m_ThresholdFilter->GetOutput()->GetPixelContainer()->GetBufferPointer() );
+	
+	  /******  Track left and right eye   ******/
+		CvRect m_leftEye = TrackFeature(m_CameraImageOpenCV,"haarcascade_mcs_lefteye.xml");
+		CvRect m_rightEye = TrackFeature(m_CameraImageOpenCV,"haarcascade_mcs_righteye.xml");
+		processedImage = *IplImage2QImage(m_CameraImageOpenCV);
+
       emit SendImage( processedImage.copy() );
     }
     else
@@ -291,7 +297,7 @@ FinalProjectApp
     rgbaCounter++;
 
     // Alpha
-    m_TempRGBABuffer[rgbaCounter] = 255;
+    m_TempRGBABuffer[rgbaCounter] = 128;
     rgbaCounter++;
   }
 
@@ -309,6 +315,34 @@ FinalProjectApp
 }
 
 
+CvRect
+FinalProjectApp
+::TrackFeature(IplImage* inputImg, char* haarFileName)
+{
+	  // Haar Cascade file, used for Face Detection.
+	char *m_CascadeFilename = haarFileName;
+	// Load the HaarCascade classifier for face detection.
+	CvHaarClassifierCascade* m_Cascade;
+	m_Cascade = (CvHaarClassifierCascade*)cvLoad(m_CascadeFilename, 0, 0, 0);
+	if( !m_Cascade ) {
+		printf("Couldnt load Haar Cascade '%s'\n", m_CascadeFilename);
+		exit(1);
+	}
+
+	
+	// Perform face detection on the input image, using the given Haar classifier
+	CvRect eyeRect = detectEyesInImage(inputImg, m_Cascade);
+
+	// Make sure a valid face was detected.
+	if (eyeRect.width > 0) {
+		printf("Detected a face at (%d,%d)!\n", eyeRect.x, eyeRect.y);
+	}
+
+	// Trace a red rectangle over the detected area
+	cvRectangle(inputImg,cvPoint(eyeRect.x,eyeRect.y), cvPoint(eyeRect.x+eyeRect.width,eyeRect.y+eyeRect.height),CV_RGB(255,0,0),1,8,0);
+	return eyeRect;
+}
+
  void
 FinalProjectApp
 ::SetThreshold(int threshold)
@@ -316,3 +350,119 @@ FinalProjectApp
    m_LowerThreshold = threshold;
    m_ThresholdFilter->SetLowerThreshold( m_LowerThreshold );
  }
+
+ //*******************  Copied Code   ****************************
+ // Perform face detection on the input image, using the given Haar Cascade.
+// Returns a rectangle for the detected region in the given image.
+CvRect 
+FinalProjectApp
+::detectEyesInImage(IplImage *inputImg, CvHaarClassifierCascade* cascade)
+{
+	// Smallest face size.
+	CvSize minFeatureSize = cvSize(20, 20);
+	// Only search for 1 face.
+	int flags = CV_HAAR_FIND_BIGGEST_OBJECT | CV_HAAR_DO_ROUGH_SEARCH;
+	// How detailed should the search be.
+	float search_scale_factor = 1.1f;
+	IplImage *detectImg;
+	IplImage *greyImg = 0;
+	CvMemStorage* storage;
+	CvRect rc;
+	double t;
+	CvSeq* rects;
+	CvSize size;
+	int i, ms, nFaces;
+
+	storage = cvCreateMemStorage(0);
+	cvClearMemStorage( storage );
+
+
+	// If the image is color, use a greyscale copy of the image.
+	detectImg = (IplImage*)inputImg;
+	if (inputImg->nChannels > 1) {
+		size = cvSize(inputImg->width, inputImg->height);
+		greyImg = cvCreateImage(size, IPL_DEPTH_8U, 1 );
+		cvCvtColor( inputImg, greyImg, CV_BGR2GRAY );
+		detectImg = greyImg;	// Use the greyscale image.
+	}
+
+	// Detect all the faces in the greyscale image.
+	t = (double)cvGetTickCount();
+	rects = cvHaarDetectObjects( detectImg, cascade, storage,
+			search_scale_factor, 3, flags, minFeatureSize);
+	t = (double)cvGetTickCount() - t;
+	ms = cvRound( t / ((double)cvGetTickFrequency() * 1000.0) );
+	nFaces = rects->total;
+	printf("Face Detection took %d ms and found %d objects\n", ms, nFaces);
+
+	// Get the first detected face (the biggest).
+	if (nFaces > 0)
+		rc = *(CvRect*)cvGetSeqElem( rects, 0 );
+	else
+		rc = cvRect(-1,-1,-1,-1);	// Couldn't find the face.
+
+	if (greyImg)
+		cvReleaseImage( &greyImg );
+	cvReleaseMemStorage( &storage );
+	//cvReleaseHaarClassifierCascade( &cascade );
+
+	return rc;	// Return the biggest face found, or (-1,-1,-1,-1).
+}
+
+QImage*
+FinalProjectApp
+::IplImage2QImage(IplImage *iplImg)
+{
+	int h = iplImg->height;
+	int w = iplImg->width;
+	int channels = iplImg->nChannels;
+	QImage *qimg = new QImage(w, h, QImage::Format_ARGB32);
+	char *data = iplImg->imageData;
+
+	for (int y = 0; y < h; y++, data += iplImg->widthStep)
+	{
+		for (int x = 0; x < w; x++)
+		{
+			char r, g, b, a = 0;
+			if (channels == 1)
+			{
+				r = data[x * channels];
+				g = data[x * channels];
+				b = data[x * channels];
+			}
+			else if (channels == 3 || channels == 4)
+			{
+				r = data[x * channels + 2];
+				g = data[x * channels + 1];
+				b = data[x * channels];
+			}
+
+			if (channels == 4)
+			{
+				a = data[x * channels + 3];
+				qimg->setPixel(x, y, qRgba(r, g, b, a));
+			}
+			else
+			{
+				qimg->setPixel(x, y, qRgb(r, g, b));
+			}
+		}
+	}
+	return qimg;
+
+}
+
+IplImage* 
+FinalProjectApp
+::QImage2IplImage(QImage *qimg)
+{
+
+	IplImage *imgHeader = cvCreateImageHeader( cvSize(qimg->width(), qimg->height()), IPL_DEPTH_8U, 4);
+	imgHeader->imageData = (char*) qimg->bits();
+
+	uchar* newdata = (uchar*) malloc(sizeof(uchar) * qimg->byteCount());
+	memcpy(newdata, qimg->bits(), qimg->byteCount());
+	imgHeader->imageData = (char*) newdata;
+	//cvClo
+	return imgHeader;
+}

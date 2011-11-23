@@ -1,0 +1,1 @@
+I don't know how to make git update which .dll and .xml files are included in the debug directory, so just keep them all in here and recopy them into Debug after pulling the latest version.

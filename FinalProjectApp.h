@@ -116,6 +116,17 @@ protected:
 
   /** Is the filter enabled? */
   bool m_FilterEnabled;
+
+  /** Find faces or eyes in an image using code from http://www.shervinemami.co.cc/faceRecognition.html */
+  CvRect detectEyesInImage(IplImage *inputImg, CvHaarClassifierCascade* cascade);
+
+  /** Convert IplImage to QtImage and vice-versa from http://umanga.wordpress.com/2010/04/19/how-to-covert-qt-qimage-into-opencv-iplimage-and-wise-versa/ */
+  QImage* IplImage2QImage(IplImage *iplImg);
+  IplImage* QImage2IplImage(QImage *qimg);
+
+  /** Wrapper to reduce the amount of code we need to add into RealtimeUpdate for tracking. 
+  Send in an image and haar template, and get a rectangle back (and drawn on the image)*/
+  CvRect TrackFeature(IplImage* inputImg, char* haarFileName);
 };
 
 #endif
