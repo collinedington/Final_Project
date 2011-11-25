@@ -117,6 +117,10 @@ protected:
   /** Is the filter enabled? */
   bool m_FilterEnabled;
 
+  /** Haar Cascades for finding different Features */
+  CvHaarClassifierCascade* m_HaarLeftEye;
+  CvHaarClassifierCascade* m_HaarRightEye;
+  CvHaarClassifierCascade* m_HaarEyePair;
   /** Find faces or eyes in an image using code from http://www.shervinemami.co.cc/faceRecognition.html */
   CvRect detectEyesInImage(IplImage *inputImg, CvHaarClassifierCascade* cascade);
 
@@ -126,7 +130,11 @@ protected:
 
   /** Wrapper to reduce the amount of code we need to add into RealtimeUpdate for tracking. 
   Send in an image and haar template, and get a rectangle back (and drawn on the image)*/
-  CvRect TrackFeature(IplImage* inputImg, char* haarFileName);
+  CvRect TrackFeature(IplImage* inputImg, CvHaarClassifierCascade* m_Cascade);
+  CvHaarClassifierCascade* LoadHaarCascade(char* m_CascadeFilename);
+
+  /**  Check to make sure two eye regions are not the same one.  From http://opencv-users.1802565.n2.nabble.com/cvRect-overlap-td3836140.html */
+  CvRect intersect(CvRect r1, CvRect r2);
 };
 
 #endif

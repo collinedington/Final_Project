@@ -43,6 +43,12 @@ FinalProjectApp
   m_LowerThreshold = 40;
 
   m_FilterEnabled = false;
+
+  // Load whichever Haar cascades we'll need so we don't have to read from file for every frame
+  m_HaarLeftEye = LoadHaarCascade("haarcascade_mcs_lefteye.xml");
+  m_HaarRightEye = LoadHaarCascade("haarcascade_mcs_righteye.xml");
+  m_HaarEyePair = LoadHaarCascade("haarcascade_mcs_eyepair_small.xml");
+
 }
 
 
@@ -135,14 +141,21 @@ FinalProjectApp
       m_ThresholdFilter->Modified();
       m_ThresholdFilter->Update();
 
-      QImage processedImage = MonoBufferToQImage( m_ThresholdFilter->GetOutput()->GetPixelContainer()->GetBufferPointer() );
+	  //Temporarily disabled to improve tracking framerate, since we are using the threshold checkbox to turn tracking on/off 
+      
+	  //QImage processedImage = MonoBufferToQImage( m_ThresholdFilter->GetOutput()->GetPixelContainer()->GetBufferPointer() );
 	
 	  /******  Track left and right eye   ******/
-		CvRect m_leftEye = TrackFeature(m_CameraImageOpenCV,"haarcascade_mcs_lefteye.xml");
-		CvRect m_rightEye = TrackFeature(m_CameraImageOpenCV,"haarcascade_mcs_righteye.xml");
-		processedImage = *IplImage2QImage(m_CameraImageOpenCV);
+		//CvRect m_leftEye = TrackFeature(m_CameraImageOpenCV, m_HaarLeftEye);
+		//CvRect m_rightEye = TrackFeature(m_CameraImageOpenCV, m_HaarRightEye);
+		CvRect m_eyepair = TrackFeature(m_CameraImageOpenCV, m_HaarEyePair);
+		QImage processedImage = *IplImage2QImage(m_CameraImageOpenCV);
 
-      emit SendImage( processedImage.copy() );
+		/** This is the end of the tracking code, move to it's own checkbox **/
+
+		//I'm not sure why we were sending a copy of this image to be emitted.  Seems like a waste of resources.
+     // emit SendImage( processedImage.copy() );
+		emit SendImage( processedImage );
     }
     else
     {
@@ -314,21 +327,22 @@ FinalProjectApp
   m_FilterEnabled = useFilter;
 }
 
-
-CvRect
+CvHaarClassifierCascade* 
 FinalProjectApp
-::TrackFeature(IplImage* inputImg, char* haarFileName)
+::LoadHaarCascade(char* m_CascadeFilename)
 {
-	  // Haar Cascade file, used for Face Detection.
-	char *m_CascadeFilename = haarFileName;
-	// Load the HaarCascade classifier for face detection.
-	CvHaarClassifierCascade* m_Cascade;
-	m_Cascade = (CvHaarClassifierCascade*)cvLoad(m_CascadeFilename, 0, 0, 0);
+	CvHaarClassifierCascade* m_Cascade = (CvHaarClassifierCascade*)cvLoad(m_CascadeFilename, 0, 0, 0);
 	if( !m_Cascade ) {
 		printf("Couldnt load Haar Cascade '%s'\n", m_CascadeFilename);
 		exit(1);
 	}
+	return m_Cascade;
+}
 
+CvRect
+FinalProjectApp
+::TrackFeature(IplImage* inputImg, CvHaarClassifierCascade* m_Cascade)
+{
 	
 	// Perform face detection on the input image, using the given Haar classifier
 	CvRect eyeRect = detectEyesInImage(inputImg, m_Cascade);
@@ -339,7 +353,7 @@ FinalProjectApp
 	}
 
 	// Trace a red rectangle over the detected area
-	cvRectangle(inputImg,cvPoint(eyeRect.x,eyeRect.y), cvPoint(eyeRect.x+eyeRect.width,eyeRect.y+eyeRect.height),CV_RGB(255,0,0),1,8,0);
+	cvRectangle(inputImg,cvPoint(eyeRect.x,eyeRect.y), cvPoint(eyeRect.x+eyeRect.width,eyeRect.y+eyeRect.height), CV_RGB(255,0,0), 1, 8, 0);
 	return eyeRect;
 }
 
@@ -359,11 +373,11 @@ FinalProjectApp
 ::detectEyesInImage(IplImage *inputImg, CvHaarClassifierCascade* cascade)
 {
 	// Smallest face size.
-	CvSize minFeatureSize = cvSize(20, 20);
+	CvSize minFeatureSize = cvSize(10, 10);
 	// Only search for 1 face.
 	int flags = CV_HAAR_FIND_BIGGEST_OBJECT | CV_HAAR_DO_ROUGH_SEARCH;
 	// How detailed should the search be.
-	float search_scale_factor = 1.1f;
+	float search_scale_factor = 1.1f; //default 1.1f
 	IplImage *detectImg;
 	IplImage *greyImg = 0;
 	CvMemStorage* storage;
@@ -404,6 +418,7 @@ FinalProjectApp
 	if (greyImg)
 		cvReleaseImage( &greyImg );
 	cvReleaseMemStorage( &storage );
+	//Now that we have permanent cascades (to improve performance) we don't want to release them
 	//cvReleaseHaarClassifierCascade( &cascade );
 
 	return rc;	// Return the biggest face found, or (-1,-1,-1,-1).
@@ -466,3 +481,26 @@ FinalProjectApp
 	//cvClo
 	return imgHeader;
 }
+
+CvRect FinalProjectApp
+::intersect(CvRect r1, CvRect r2) 
+{ 
+    CvRect intersection; 
+    
+    // find overlapping region 
+    intersection.x = (r1.x < r2.x) ? r2.x : r1.x; 
+    intersection.y = (r1.y < r2.y) ? r2.y : r1.y; 
+    intersection.width = (r1.x + r1.width < r2.x + r2.width) ? 
+        r1.x + r1.width : r2.x + r2.width; 
+    intersection.width -= intersection.x; 
+    intersection.height = (r1.y + r1.height < r2.y + r2.height) ? 
+        r1.y + r1.height : r2.y + r2.height; 
+    intersection.height -= intersection.y;     
+    
+    // check for non-overlapping regions 
+    if ((intersection.width <= 0) || (intersection.height <= 0)) { 
+        intersection = cvRect(0, 0, 0, 0); 
+    } 
+    
+    return intersection; 
+} 
