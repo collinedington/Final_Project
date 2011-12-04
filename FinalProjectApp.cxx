@@ -40,14 +40,21 @@ FinalProjectApp
   m_ConnectedToCamera = false;
 
   // Filter parameter
-  m_LowerThreshold = 40;
+  m_Threshold = 40;
 
   m_FilterEnabled = false;
+
+  //Start the counter
+  m_attentionCounter = 0;
 
   // Load whichever Haar cascades we'll need so we don't have to read from file for every frame
   m_HaarLeftEye = LoadHaarCascade("haarcascade_mcs_lefteye.xml");
   m_HaarRightEye = LoadHaarCascade("haarcascade_mcs_righteye.xml");
-  m_HaarEyePair = LoadHaarCascade("haarcascade_mcs_eyepair_small.xml");
+  m_HaarEyePairSmall = LoadHaarCascade("haarcascade_mcs_eyepair_small.xml");
+  m_HaarEyePairBig = LoadHaarCascade("haarcascade_mcs_eyepair_big.xml");
+  m_HaarFrontalFace = LoadHaarCascade("haarcascade_frontalface_default.xml");
+  m_HaarMouth = LoadHaarCascade("haarcascade_mcs_mouth.xml");
+  m_HaarNose = LoadHaarCascade("haarcascade_mcs_nose.xml");
 
 }
 
@@ -135,27 +142,41 @@ FinalProjectApp
 
     if(m_FilterEnabled)
     {
-      // Update the filter. Since we're modifying the source image outside
-      // of the normal pipeline mechanism, we need to let the filter know
-      // that the input was modified
-      m_ThresholdFilter->Modified();
-      m_ThresholdFilter->Update();
-
-	  //Temporarily disabled to improve tracking framerate, since we are using the threshold checkbox to turn tracking on/off 
-      
-	  //QImage processedImage = MonoBufferToQImage( m_ThresholdFilter->GetOutput()->GetPixelContainer()->GetBufferPointer() );
-	
-	  /******  Track left and right eye   ******/
-		//CvRect m_leftEye = TrackFeature(m_CameraImageOpenCV, m_HaarLeftEye);
-		//CvRect m_rightEye = TrackFeature(m_CameraImageOpenCV, m_HaarRightEye);
-		CvRect m_eyepair = TrackFeature(m_CameraImageOpenCV, m_HaarEyePair);
-		QImage processedImage = *IplImage2QImage(m_CameraImageOpenCV);
-
-		/** This is the end of the tracking code, move to it's own checkbox **/
+		//Determine which radiobutton is selected and track appropriately
+		
+		if(m_EyePairBigEnabled)
+		{
+			CvRect m_EyePairBig = TrackFeature(m_CameraImageOpenCV, m_HaarEyePairBig);
+			
+		}
+		else if(m_EyePairSmallEnabled)
+		{
+			CvRect m_EyePairSmall = TrackFeature(m_CameraImageOpenCV, m_HaarEyePairSmall);
+		}
+		else if(m_FrontalFaceEnabled)
+		{
+			CvRect m_FrontalFace = TrackFeature(m_CameraImageOpenCV, m_HaarFrontalFace);
+		}
+		else if(m_LeftRightEyeEnabled)
+		{
+			CvRect m_LeftEye = TrackFeature(m_CameraImageOpenCV, m_HaarLeftEye);
+			CvRect m_RightEye = TrackFeature(m_CameraImageOpenCV, m_HaarRightEye);
+		}
+		else if(m_MouthEnabled)
+		{
+			CvRect m_Mouth = TrackFeature(m_CameraImageOpenCV, m_HaarMouth);
+		}
+		else if(m_NoseEnabled)
+		{
+			CvRect m_Nose = TrackFeature(m_CameraImageOpenCV, m_HaarNose);
+		}
+		
 
 		//I'm not sure why we were sending a copy of this image to be emitted.  Seems like a waste of resources.
-     // emit SendImage( processedImage.copy() );
+		// emit SendImage( processedImage.copy() );
+		QImage processedImage = *IplImage2QImage(m_CameraImageOpenCV);
 		emit SendImage( processedImage );
+		emit updateAttentionBar( m_attentionCounter );
     }
     else
     {
@@ -163,6 +184,7 @@ FinalProjectApp
  
       // Send a copy of the image out via signals/slots
       emit SendImage( cameraImage.copy() );
+	  emit updateAttentionBar( m_attentionCounter );
     }
   }
 }
@@ -206,7 +228,7 @@ FinalProjectApp
   m_ThresholdFilter->SetInput( m_Image );
   m_ThresholdFilter->SetOutsideValue( 255 );
   m_ThresholdFilter->SetInsideValue( 0 );
-  m_ThresholdFilter->SetLowerThreshold( m_LowerThreshold );
+  m_ThresholdFilter->SetLowerThreshold( m_Threshold );
   m_ThresholdFilter->SetUpperThreshold( 255 );
 }
 
@@ -327,6 +349,42 @@ FinalProjectApp
   m_FilterEnabled = useFilter;
 }
 
+void
+FinalProjectApp
+::SetRadioButtonEyePairBig(bool bigEyePair){
+	m_EyePairBigEnabled = bigEyePair;
+}
+
+void 
+FinalProjectApp
+::SetRadioButtonEyePairSmall(bool smallEyePair){
+	m_EyePairSmallEnabled = smallEyePair;
+  }
+
+void 
+FinalProjectApp
+::SetRadioButtonFrontalFace(bool frontalFace){
+	m_FrontalFaceEnabled = frontalFace;
+}
+
+void 
+FinalProjectApp
+::SetRadioButtonLeftRightEye(bool leftRightEye){
+	m_LeftRightEyeEnabled = leftRightEye;
+}
+
+void 
+FinalProjectApp
+::SetRadioButtonMouth(bool mouth){
+	m_MouthEnabled = mouth;
+}
+
+void 
+FinalProjectApp
+::SetRadioButtonNose(bool nose){
+	m_NoseEnabled = nose;
+}
+
 CvHaarClassifierCascade* 
 FinalProjectApp
 ::LoadHaarCascade(char* m_CascadeFilename)
@@ -349,8 +407,16 @@ FinalProjectApp
 
 	// Make sure a valid face was detected.
 	if (eyeRect.width > 0) {
-		printf("Detected a face at (%d,%d)!\n", eyeRect.x, eyeRect.y);
+		printf("Detected a feature at (%d,%d)!\n", eyeRect.x, eyeRect.y);
+		if(m_attentionCounter < m_Threshold)
+			{
+				m_attentionCounter++;
+			}
+			
 	}
+	else if(m_attentionCounter >0){
+				m_attentionCounter--;
+			}
 
 	// Trace a red rectangle over the detected area
 	cvRectangle(inputImg,cvPoint(eyeRect.x,eyeRect.y), cvPoint(eyeRect.x+eyeRect.width,eyeRect.y+eyeRect.height), CV_RGB(255,0,0), 1, 8, 0);
@@ -361,8 +427,9 @@ FinalProjectApp
 FinalProjectApp
 ::SetThreshold(int threshold)
  {
-   m_LowerThreshold = threshold;
-   m_ThresholdFilter->SetLowerThreshold( m_LowerThreshold );
+   m_Threshold = threshold;
+   m_ThresholdFilter->SetLowerThreshold( m_Threshold );
+   m_attentionCounter = 0;
  }
 
  //*******************  Copied Code   ****************************

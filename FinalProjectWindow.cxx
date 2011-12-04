@@ -44,6 +44,18 @@ FinalProjectWindow
   // Connect signals/slots within the GUI
   connect(thresholdSlider, SIGNAL( valueChanged(int) ), thresholdSpinBox, SLOT( setValue(int) ) );
   connect(thresholdSpinBox, SIGNAL( valueChanged(int) ), thresholdSlider, SLOT( setValue(int) ) );
+  //my addition - sets the maximum of the attention bar to the threshold slider value
+  connect(thresholdSpinBox, SIGNAL( valueChanged(int) ), attentionBar, SLOT( setMaximum(int) ) );
+
+  //My additions
+  connect(radioButtonEyePairBig, SIGNAL( toggled(bool) ), m_App, SLOT( SetRadioButtonEyePairBig(bool)) );
+  connect(radioButtonEyePairSmall, SIGNAL( toggled(bool) ), m_App, SLOT( SetRadioButtonEyePairSmall(bool)) );
+  connect(radioButtonFrontalFace, SIGNAL( toggled(bool) ), m_App, SLOT( SetRadioButtonFrontalFace(bool)) );
+  connect(radioButtonLeftRightEye, SIGNAL( toggled(bool) ), m_App, SLOT( SetRadioButtonLeftRightEye(bool)) );
+  connect(radioButtonMouth, SIGNAL( toggled(bool) ), m_App, SLOT( SetRadioButtonMouth(bool)) );
+  connect(radioButtonNose, SIGNAL( toggled(bool) ), m_App, SLOT( SetRadioButtonNose(bool)) );
+  
+  connect(m_App, SIGNAL( updateAttentionBar(int)), attentionBar , SLOT( setValue(int) ));
 
   // Connect signals/slots to the app
   connect(m_App, SIGNAL( SendImage(QImage) ), this, SLOT( OnReceiveImage(QImage) ));

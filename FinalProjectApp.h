@@ -56,10 +56,21 @@ public slots:
   /** Set the lower value for the threshold filter */
   void SetThreshold(int threshold);
 
+  /** New Buttons and stuff that we added to the GUI*/
+  void SetRadioButtonEyePairBig(bool bigEyePair);
+  void SetRadioButtonEyePairSmall(bool smallEyePair); 
+  void SetRadioButtonFrontalFace(bool frontalFace);
+  void SetRadioButtonLeftRightEye(bool leftRightEye);
+  void SetRadioButtonMouth(bool mouth);
+  void SetRadioButtonNose(bool nose);
+
 signals:
 
   /** Send a QImage to a receiver */
   void SendImage(QImage image);
+
+  /** update the attention bar */
+  void updateAttentionBar(int attentionProgress);
 
 protected:
 
@@ -112,15 +123,27 @@ protected:
   ThresholdType::Pointer m_ThresholdFilter;
 
   /** Lower threshold value in filter */
-  int m_LowerThreshold;
+  int m_Threshold;
 
   /** Is the filter enabled? */
   bool m_FilterEnabled;
 
+  /** Radio Button Values */
+  bool m_EyePairBigEnabled;
+  bool m_EyePairSmallEnabled;
+  bool m_FrontalFaceEnabled;
+  bool m_LeftRightEyeEnabled;
+  bool m_MouthEnabled;
+  bool m_NoseEnabled;
+
   /** Haar Cascades for finding different Features */
   CvHaarClassifierCascade* m_HaarLeftEye;
   CvHaarClassifierCascade* m_HaarRightEye;
-  CvHaarClassifierCascade* m_HaarEyePair;
+  CvHaarClassifierCascade* m_HaarEyePairSmall;
+  CvHaarClassifierCascade* m_HaarEyePairBig;
+  CvHaarClassifierCascade* m_HaarFrontalFace;
+  CvHaarClassifierCascade* m_HaarMouth;
+  CvHaarClassifierCascade* m_HaarNose;
   /** Find faces or eyes in an image using code from http://www.shervinemami.co.cc/faceRecognition.html */
   CvRect detectEyesInImage(IplImage *inputImg, CvHaarClassifierCascade* cascade);
 
@@ -135,6 +158,9 @@ protected:
 
   /**  Check to make sure two eye regions are not the same one.  From http://opencv-users.1802565.n2.nabble.com/cvRect-overlap-td3836140.html */
   CvRect intersect(CvRect r1, CvRect r2);
+
+  /** Counter to see how much we've been successfully tracking */
+  int m_attentionCounter;
 };
 
 #endif
