@@ -158,12 +158,15 @@
           <number>255</number>
          </property>
          <property name="value">
-          <number>40</number>
+          <number>30</number>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QProgressBar" name="attentionBar">
+         <property name="maximum">
+          <number>30</number>
+         </property>
          <property name="value">
           <number>0</number>
          </property>

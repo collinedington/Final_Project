@@ -41,6 +41,8 @@ FinalProjectApp
 
   // Filter parameter
   m_Threshold = 40;
+  m_EyePairBigEnabled = true;
+  updateAttentionBar(m_Threshold);
 
   m_FilterEnabled = false;
 
@@ -128,6 +130,7 @@ FinalProjectApp
     if(m_CameraImageOpenCV == NULL)
       return;
 
+	/*  RGB extraction is not necessary for our purposes.  Keeping code just in case.
     // Extract RGB data from captured image
     unsigned char * openCVBuffer = (unsigned char*)(m_CameraImageOpenCV->imageData);
 
@@ -136,10 +139,11 @@ FinalProjectApp
     {
       m_CameraFrameRGBBuffer[b] = openCVBuffer[b];
     }
+	
 
     // Update the ITK image
     this->CopyImageToITK();
-
+	*/
     if(m_FilterEnabled)
     {
 		//Determine which radiobutton is selected and track appropriately
@@ -172,19 +176,16 @@ FinalProjectApp
 		}
 		
 
-		//I'm not sure why we were sending a copy of this image to be emitted.  Seems like a waste of resources.
-		// emit SendImage( processedImage.copy() );
 		QImage processedImage = *IplImage2QImage(m_CameraImageOpenCV);
 		emit SendImage( processedImage );
 		emit updateAttentionBar( m_attentionCounter );
     }
     else
     {
-      QImage cameraImage = RGBBufferToQImage(m_CameraFrameRGBBuffer);
- 
-      // Send a copy of the image out via signals/slots
-      emit SendImage( cameraImage.copy() );
-	  emit updateAttentionBar( m_attentionCounter );
+		QImage processedImage = *IplImage2QImage(m_CameraImageOpenCV);
+		// Send a copy of the image out via signals/slots
+		emit SendImage( processedImage );
+		emit updateAttentionBar( m_attentionCounter );
     }
   }
 }
@@ -407,7 +408,8 @@ FinalProjectApp
 
 	// Make sure a valid face was detected.
 	if (eyeRect.width > 0) {
-		printf("Detected a feature at (%d,%d)!\n", eyeRect.x, eyeRect.y);
+		//uncomment for debugging
+		//printf("Detected a feature at (%d,%d)!\n", eyeRect.x, eyeRect.y);
 		if(m_attentionCounter < m_Threshold)
 			{
 				m_attentionCounter++;
@@ -474,7 +476,8 @@ FinalProjectApp
 	t = (double)cvGetTickCount() - t;
 	ms = cvRound( t / ((double)cvGetTickFrequency() * 1000.0) );
 	nFaces = rects->total;
-	printf("Face Detection took %d ms and found %d objects\n", ms, nFaces);
+	//uncomment for debugging
+	//printf("Face Detection took %d ms and found %d objects\n", ms, nFaces);
 
 	// Get the first detected face (the biggest).
 	if (nFaces > 0)
