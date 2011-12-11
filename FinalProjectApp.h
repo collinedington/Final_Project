@@ -64,6 +64,9 @@ public slots:
   void SetRadioButtonMouth(bool mouth);
   void SetRadioButtonNose(bool nose);
 
+  /** Write the frame variables to the log file */
+  void SaveLog();
+
 signals:
 
   /** Send a QImage to a receiver */
@@ -144,6 +147,7 @@ protected:
   CvHaarClassifierCascade* m_HaarFrontalFace;
   CvHaarClassifierCascade* m_HaarMouth;
   CvHaarClassifierCascade* m_HaarNose;
+
   /** Find faces or eyes in an image using code from http://www.shervinemami.co.cc/faceRecognition.html */
   CvRect detectEyesInImage(IplImage *inputImg, CvHaarClassifierCascade* cascade);
 
@@ -167,9 +171,6 @@ protected:
 
   /** Initialize a log file */
   FILE *m_logFile;
-
-  /** Write the frame variables to the log file */
-  void SaveLog();
 
   /** Initialize log file variables */
   int *m_Detect;

@@ -68,10 +68,10 @@ FinalProjectApp
 
   /** Initialize log file dynamic arrays */
   int TotalFrames = 1440; // 3 frames per second * 60 seconds per minute * 8 minutes
-  m_Detect = new int [TotalFrames];
   m_TimeStamp = new double [TotalFrames];
   m_Trial = new int [TotalFrames];
   m_Feature = new int [TotalFrames];
+  m_Detect = new int [TotalFrames];
   m_InterTrial = new int [TotalFrames];
   m_ButtonPress = new int [TotalFrames];
   m_Reach = new int [TotalFrames];
@@ -89,15 +89,15 @@ FinalProjectApp
     this->DisconnectCamera();
   }
 
-  SaveLog();
+  //SaveLog();
 
   delete[] m_CameraFrameRGBBuffer;
   delete[] m_TempRGBABuffer;
 
-  delete[] m_Detect;
   delete[] m_TimeStamp;
   delete[] m_Trial;
   delete[] m_Feature;
+  delete[] m_Detect;
   delete[] m_InterTrial;
   delete[] m_ButtonPress;
   delete[] m_Reach;
@@ -634,16 +634,12 @@ void
 FinalProjectApp
 ::SaveLog()
 {
-  std::cout << m_frame << "\n";
-  std::cout << m_Feature[m_frame-1] << "\n";
-  std::cout << m_Detect[m_frame-1] << "\n";
-  std::cout << m_InterTrial[m_frame-1] << "\n";
-  std::cout << m_ButtonPress[m_frame-1] << "\n";
-  std::cout << m_Reach[m_frame-1] << "\n";
   for(int i = 0; i < m_frame; i++) {
       fprintf(m_logFile, "%f,%i,%i,%i,%i,%i,%i\n", m_TimeStamp[i], m_Trial[i], m_Feature[i], m_Detect[i], m_InterTrial[i], m_ButtonPress[i], m_Reach[i]);
-  }
+}
   
+  // Reset the arrays to continue recording data
   m_frame = 0;
-  std::cout << "Saved log file";
+
+  std::cout << "Saved log file\n";
 }

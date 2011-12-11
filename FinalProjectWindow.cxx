@@ -61,6 +61,7 @@ FinalProjectWindow
   connect(m_App, SIGNAL( SendImage(QImage) ), this, SLOT( OnReceiveImage(QImage) ));
   connect(applyThresholdCheckBox, SIGNAL( toggled(bool) ), m_App, SLOT( SetApplyFilter(bool) ));
   connect(thresholdSpinBox, SIGNAL( valueChanged(int) ), m_App, SLOT( SetThreshold(int) ));
+  connect(saveButton, SIGNAL( clicked() ), m_App, SLOT( SaveLog() ));
 
   // Start the event timer
   m_TimerID = startTimer(33);
