@@ -161,6 +161,24 @@ protected:
 
   /** Counter to see how much we've been successfully tracking */
   int m_attentionCounter;
+
+  /** Initialize a frame index for the arrays */
+  int m_frame;
+
+  /** Initialize a log file */
+  FILE *m_logFile;
+
+  /** Write the frame variables to the log file */
+  void SaveLog();
+
+  /** Initialize log file variables */
+  int *m_Detect;
+  double *m_TimeStamp;
+  int *m_Trial;
+  int *m_Feature;
+  int *m_InterTrial;
+  int *m_ButtonPress;
+  int *m_Reach;
 };
 
 #endif
