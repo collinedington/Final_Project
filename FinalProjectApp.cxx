@@ -89,7 +89,7 @@ FinalProjectApp
     this->DisconnectCamera();
   }
 
-  //SaveLog();
+  SaveLog();
 
   delete[] m_CameraFrameRGBBuffer;
   delete[] m_TempRGBABuffer;
