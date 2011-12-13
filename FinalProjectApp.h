@@ -22,6 +22,7 @@
 
 #include <cv.h>
 #include <highgui.h>
+#include <QTime>
 
 #include "itkImage.h"
 #include "itkBinaryThresholdImageFilter.h"
@@ -67,6 +68,12 @@ public slots:
   /** Write the frame variables to the log file */
   void SaveLog();
 
+  /** A slot that the external program can call to advance the trial stage.
+  0 = Intertrial	1 = Button Press	2 = Reach				**/
+  void AdvanceTrialStage(int nextStage);
+
+
+
 signals:
 
   /** Send a QImage to a receiver */
@@ -74,6 +81,10 @@ signals:
 
   /** update the attention bar */
   void updateAttentionBar(int attentionProgress);
+
+  /** update the trial counter lcds **/
+  void updateSuccessfulTrialsLCD(int successTrials);
+  void updateFailedTrialsLCD(int failTrials);
 
 protected:
 
@@ -177,9 +188,17 @@ protected:
   double *m_TimeStamp;
   int *m_Trial;
   int *m_Feature;
-  int *m_InterTrial;
-  int *m_ButtonPress;
-  int *m_Reach;
+  int *m_Stage;
+  /*Switched to this method so instead of checking what stage/feature we're using each time,
+  we simply reference the current state.  It saves a few if statements, and makes it easier to
+  reference these variables in the future, instead of having to look into the array (if we make them dynamic)
+  or having to run an if statement */
+  int m_CurrentStage;
+  int m_CurrentFeature;
+  int m_CurrentTrial;
+  QTime m_QTime;
+  int m_SuccessfulTrials, m_FailedTrials;
+  
 };
 
 #endif

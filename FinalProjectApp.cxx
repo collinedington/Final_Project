@@ -16,6 +16,8 @@
 #include <time.h>
 #include "FinalProjectApp.h"
 #include <string.h>
+#include <itkArray.h>
+#include <random>
 
 FinalProjectApp
 ::FinalProjectApp()
@@ -56,25 +58,32 @@ FinalProjectApp
   m_HaarEyePairSmall = LoadHaarCascade("haarcascade_mcs_eyepair_small.xml");
   m_HaarEyePairBig = LoadHaarCascade("haarcascade_mcs_eyepair_big.xml");
   m_HaarFrontalFace = LoadHaarCascade("haarcascade_frontalface_default.xml");
-  //m_HaarMouth = LoadHaarCascade("haarcascade_mcs_mouth.xml");
-  //m_HaarNose = LoadHaarCascade("haarcascade_mcs_nose.xml");
+  m_HaarMouth = LoadHaarCascade("haarcascade_mcs_mouth.xml");
+  m_HaarNose = LoadHaarCascade("haarcascade_mcs_nose.xml");
 
   // Initialize a log file with hard coded headers
   m_logFile = fopen("Log File.csv","w");
-  fprintf(m_logFile, "%s,%s,%s,%s,%s,%s,%s\n", "Time", "Trial", "Feature", "Detect", "Intertrial", "ButtonPress", "Reach");
+  fprintf(m_logFile, "%s,%s,%s,%s,%s\n", "Time", "Trial", "Feature", "Detect", "Stage");
 
   // Initialize the frame index for the arrays
   m_frame = 0;
 
   /** Initialize log file dynamic arrays */
-  int TotalFrames = 1440; // 3 frames per second * 60 seconds per minute * 8 minutes
+  int TotalFrames = 10000; // 3 frames per second * 60 seconds per minute * 8 minutes
   m_TimeStamp = new double [TotalFrames];
   m_Trial = new int [TotalFrames];
   m_Feature = new int [TotalFrames];
   m_Detect = new int [TotalFrames];
-  m_InterTrial = new int [TotalFrames];
-  m_ButtonPress = new int [TotalFrames];
-  m_Reach = new int [TotalFrames];
+  m_Stage = new int [TotalFrames];
+  m_CurrentStage = 0;
+  m_CurrentFeature = 1; //This is overrided with 0 if tracking is not enabled
+  m_QTime.start();
+  m_CurrentTrial = 0;
+  m_SuccessfulTrials = 0;
+  m_FailedTrials = 0;
+
+  //initialize random number seed to randomly advance the stage
+  srand( time(NULL) );
 }
 
 
@@ -98,12 +107,13 @@ FinalProjectApp
   delete[] m_Trial;
   delete[] m_Feature;
   delete[] m_Detect;
-  delete[] m_InterTrial;
-  delete[] m_ButtonPress;
-  delete[] m_Reach;
+  delete[] m_Stage;
+  
 
-  // Append feature definitions to the log file
+
+  // Append feature definitions and stage numbers to the log file
   fprintf(m_logFile, "\n%s,\t%s,\t%s,\t%s,\t%s,\t%s", "bigEyePair = 1", "smallEyePair = 2", "frontalFace = 3", "leftRightEye = 4", "mouth = 5", "nose = 6");
+  fprintf(m_logFile, "\n%s,\t%s,\t%s","Stage 0 = Intertrial", "Stage 1 = Button Press", "Stage 2 = Reach");
   fclose(m_logFile);
 }
 
@@ -178,64 +188,67 @@ FinalProjectApp
     if(m_FilterEnabled)
     {
 		  //Determine which radiobutton is selected and track appropriately
-		
 		  if(m_EyePairBigEnabled)
 		  {
 			  CvRect m_EyePairBig = TrackFeature(m_CameraImageOpenCV, m_HaarEyePairBig);
-        m_Feature[m_frame] = 1;
 		  }
 		  else if(m_EyePairSmallEnabled)
 		  {
 			  CvRect m_EyePairSmall = TrackFeature(m_CameraImageOpenCV, m_HaarEyePairSmall);
-        m_Feature[m_frame] = 2;
 		  }
 		  else if(m_FrontalFaceEnabled)
 		  {
 			  CvRect m_FrontalFace = TrackFeature(m_CameraImageOpenCV, m_HaarFrontalFace);
-        m_Feature[m_frame] = 3;
 		  }
 		  else if(m_LeftRightEyeEnabled)
 		  {
 			  CvRect m_LeftEye = TrackFeature(m_CameraImageOpenCV, m_HaarLeftEye);
 			  CvRect m_RightEye = TrackFeature(m_CameraImageOpenCV, m_HaarRightEye);
-        m_Feature[m_frame] = 4;
 		  }
 		  else if(m_MouthEnabled)
 		  {
 			  CvRect m_Mouth = TrackFeature(m_CameraImageOpenCV, m_HaarMouth);
-        m_Feature[m_frame] = 5;
 		  }
 		  else if(m_NoseEnabled)
 		  {
 			  CvRect m_Nose = TrackFeature(m_CameraImageOpenCV, m_HaarNose);
-        m_Feature[m_frame] = 6;
 		  }
 		
 
 		  QImage processedImage = *IplImage2QImage(m_CameraImageOpenCV);
 		  emit SendImage( processedImage );
 		  emit updateAttentionBar( m_attentionCounter );
+		  m_Feature[m_frame] = m_CurrentFeature;
     }
 
     else
     {
-      m_Detect[m_frame] = 99;
-      m_Feature[m_frame] = 99;
-      m_TimeStamp[m_frame] = m_frame;
+		
+      m_Detect[m_frame] = 0;
+	  m_Feature[m_frame] = 0;
+	  if(m_attentionCounter >0) {
+				m_attentionCounter--;
+			}
 		  QImage processedImage = *IplImage2QImage(m_CameraImageOpenCV);
 		  // Send a copy of the image out via signals/slots
 		  emit SendImage( processedImage );
 		  emit updateAttentionBar( m_attentionCounter );
     }
     // Within capture image but outside filter if statement
-    m_Trial[m_frame] = m_frame;
-    m_InterTrial[m_frame] = m_frame;
-    m_ButtonPress[m_frame] = m_frame;
-    m_Reach[m_frame] = m_frame;
-
-    // Create a frame index
-    m_frame++;
+    m_Trial[m_frame] = m_CurrentTrial;
+    m_Stage[m_frame] = m_CurrentStage;
+	
+	m_TimeStamp[m_frame] = ((double)m_QTime.elapsed())/1000;
+    // Create a frame index, make sure we don't overwrite the 
+    if(m_frame > 9998) SaveLog(); //m_frame will be reset to zero inside SaveLog()
+	else m_frame++;
   }
+ 
+  /** Randomly advance to the next stage.  This will be replaced by signals from 
+  the external controller program, but for now we want to make sure it's working **/
+  if(rand() % 10 == 1)AdvanceTrialStage( (m_CurrentStage+1)%3 ); 
+  // 10% chance to advance, set nextStage to next value, wrap from 2->0
+
 }
 
 
@@ -402,36 +415,42 @@ void
 FinalProjectApp
 ::SetRadioButtonEyePairBig(bool bigEyePair){
 	m_EyePairBigEnabled = bigEyePair;
+	m_CurrentFeature = 1;
 }
 
 void 
 FinalProjectApp
 ::SetRadioButtonEyePairSmall(bool smallEyePair){
 	m_EyePairSmallEnabled = smallEyePair;
+	 m_CurrentFeature = 2;
   }
 
 void 
 FinalProjectApp
 ::SetRadioButtonFrontalFace(bool frontalFace){
 	m_FrontalFaceEnabled = frontalFace;
+	 m_CurrentFeature = 3;
 }
 
 void 
 FinalProjectApp
 ::SetRadioButtonLeftRightEye(bool leftRightEye){
 	m_LeftRightEyeEnabled = leftRightEye;
+	 m_CurrentFeature = 4;
 }
 
 void 
 FinalProjectApp
 ::SetRadioButtonMouth(bool mouth){
 	m_MouthEnabled = mouth;
+	 m_CurrentFeature = 5;
 }
 
 void 
 FinalProjectApp
 ::SetRadioButtonNose(bool nose){
 	m_NoseEnabled = nose;
+	 m_CurrentFeature = 6;
 }
 
 CvHaarClassifierCascade* 
@@ -635,11 +654,32 @@ FinalProjectApp
 ::SaveLog()
 {
   for(int i = 0; i < m_frame; i++) {
-      fprintf(m_logFile, "%f,%i,%i,%i,%i,%i,%i\n", m_TimeStamp[i], m_Trial[i], m_Feature[i], m_Detect[i], m_InterTrial[i], m_ButtonPress[i], m_Reach[i]);
-}
-  
+      fprintf(m_logFile, "%f,%i,%i,%i,%i\n", m_TimeStamp[i], m_Trial[i], m_Feature[i], m_Detect[i], m_Stage[i]);
+	}
   // Reset the arrays to continue recording data
   m_frame = 0;
 
   std::cout << "Saved log file\n";
+}
+
+void
+FinalProjectApp
+::AdvanceTrialStage(int nextStage)
+{
+	if(nextStage>=0 && nextStage<=2){
+		m_CurrentStage = nextStage;
+		//Since the stage has advanced, lets see if we should update the LCDs
+		if(m_CurrentStage == 0){
+			m_CurrentTrial++;
+			//Determine if we call this a success, subject to change
+			if(((double)m_attentionCounter) / ((double)m_Threshold) > 0.5) m_SuccessfulTrials++;
+			else m_FailedTrials++;
+			emit updateSuccessfulTrialsLCD(m_SuccessfulTrials);
+			emit updateFailedTrialsLCD(m_FailedTrials);
+		}
+	}
+	else printf("Error, invalid number for next stage (%i)",nextStage);
+
+	
+
 }
