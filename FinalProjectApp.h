@@ -68,9 +68,9 @@ public slots:
   /** Write the frame variables to the log file */
   void SaveLog();
 
-  /** A slot that the external program can call to advance the trial stage.
+  /** A slot that the external program can call to advance the trial Epoch.
   0 = Intertrial	1 = Button Press	2 = Reach				**/
-  void AdvanceTrialStage(int nextStage);
+  void AdvanceTrialEpoch(int nextEpoch);
 
 
 
@@ -188,12 +188,12 @@ protected:
   double *m_TimeStamp;
   int *m_Trial;
   int *m_Feature;
-  int *m_Stage;
-  /*Switched to this method so instead of checking what stage/feature we're using each time,
+  int *m_Epoch;
+  /*Switched to this method so instead of checking what Epoch/feature we're using each time,
   we simply reference the current state.  It saves a few if statements, and makes it easier to
   reference these variables in the future, instead of having to look into the array (if we make them dynamic)
   or having to run an if statement */
-  int m_CurrentStage;
+  int m_CurrentEpoch;
   int m_CurrentFeature;
   int m_CurrentTrial;
   QTime m_QTime;

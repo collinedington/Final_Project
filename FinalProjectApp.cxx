@@ -58,8 +58,8 @@ FinalProjectApp
   m_HaarEyePairSmall = LoadHaarCascade("haarcascade_mcs_eyepair_small.xml");
   m_HaarEyePairBig = LoadHaarCascade("haarcascade_mcs_eyepair_big.xml");
   m_HaarFrontalFace = LoadHaarCascade("haarcascade_frontalface_default.xml");
-  //m_HaarMouth = LoadHaarCascade("haarcascade_mcs_mouth.xml");
-  //m_HaarNose = LoadHaarCascade("haarcascade_mcs_nose.xml");
+  m_HaarMouth = LoadHaarCascade("haarcascade_mcs_mouth.xml");
+  m_HaarNose = LoadHaarCascade("haarcascade_mcs_nose.xml");
 
   // Initialize a log file with hard coded headers
   m_logFile = fopen("Log File.csv","w");
@@ -69,20 +69,20 @@ FinalProjectApp
   m_frame = 0;
 
   /** Initialize log file dynamic arrays */
-  int TotalFrames = 10000; // 3 frames per second * 60 seconds per minute * 8 minutes
+  int TotalFrames = 10000; 
   m_TimeStamp = new double [TotalFrames];
   m_Trial = new int [TotalFrames];
   m_Feature = new int [TotalFrames];
   m_Detect = new int [TotalFrames];
-  m_Stage = new int [TotalFrames];
-  m_CurrentStage = 0;
-  m_CurrentFeature = 1; //This is overrided with 0 if tracking is not enabled
+  m_Epoch = new int [TotalFrames];
+  m_CurrentEpoch = 0;
+  m_CurrentFeature = 1; //This is overrided with -1 if tracking is not enabled
   m_QTime.start();
   m_CurrentTrial = 0;
   m_SuccessfulTrials = 0;
   m_FailedTrials = 0;
 
-  //initialize random number seed to randomly advance the stage
+  //initialize random number seed to randomly advance the Epoch
   srand( time(NULL) );
 }
 
@@ -98,6 +98,7 @@ FinalProjectApp
     this->DisconnectCamera();
   }
 
+  // Automatically save a log file upon exiting the program
   SaveLog();
 
   delete[] m_CameraFrameRGBBuffer;
@@ -107,11 +108,9 @@ FinalProjectApp
   delete[] m_Trial;
   delete[] m_Feature;
   delete[] m_Detect;
-  delete[] m_Stage;
-  
+  delete[] m_Epoch;
 
-
-  // Append feature definitions and stage numbers to the log file
+  // Append feature definitions and Epoch numbers to the log file
   fprintf(m_logFile, "\n%s,\t%s,\t%s,\t%s,\t%s,\t%s", "bigEyePair = 1", "smallEyePair = 2", "frontalFace = 3", "leftRightEye = 4", "mouth = 5", "nose = 6");
   fprintf(m_logFile, "\n%s,\t%s,\t%s","Epoch 0 = Intertrial", "Epoch 1 = Button Press", "Epoch 2 = Reach");
   fclose(m_logFile);
@@ -224,30 +223,38 @@ FinalProjectApp
     else
     {
 		
-      m_Detect[m_frame] = 0;
-	  m_Feature[m_frame] = 0;
-	  if(m_attentionCounter >0) {
+      // Signify with -1 that no tracking is being conducted
+      m_Detect[m_frame] = -1;
+	    m_Feature[m_frame] = -1;
+	    
+      // Log for the attention bar
+      if(m_attentionCounter >0) {
 				m_attentionCounter--;
 			}
-		  QImage processedImage = *IplImage2QImage(m_CameraImageOpenCV);
+		  
+      QImage processedImage = *IplImage2QImage(m_CameraImageOpenCV);
 		  // Send a copy of the image out via signals/slots
 		  emit SendImage( processedImage );
 		  emit updateAttentionBar( m_attentionCounter );
     }
+
     // Within capture image but outside filter if statement
     m_Trial[m_frame] = m_CurrentTrial;
-    m_Stage[m_frame] = m_CurrentStage;
+    m_Epoch[m_frame] = m_CurrentEpoch;
 	
-	m_TimeStamp[m_frame] = ((double)m_QTime.elapsed())/1000;
+	  m_TimeStamp[m_frame] = ((double)m_QTime.elapsed())/1000;
+    
     // Create a frame index, make sure we don't overwrite the 
     if(m_frame > 9998) SaveLog(); //m_frame will be reset to zero inside SaveLog()
-	else m_frame++;
+	  
+    // Proceed to the next frame index
+    else m_frame++;
   }
  
-  /** Randomly advance to the next stage.  This will be replaced by signals from 
+  /** Randomly advance to the next Epoch.  This will be replaced by signals from 
   the external controller program, but for now we want to make sure it's working **/
-  if(rand() % 10 == 1)AdvanceTrialStage( (m_CurrentStage+1)%3 ); 
-  // 10% chance to advance, set nextStage to next value, wrap from 2->0
+  if(rand() % 10 == 1)AdvanceTrialEpoch( (m_CurrentEpoch+1)%3 ); 
+  // 10% chance to advance, set nextEpoch to next value, wrap from 2->0
 
 }
 
@@ -285,13 +292,13 @@ FinalProjectApp
   m_Image->Allocate();
 
   //---------Next, set up the filter
-
+  // This is really to setup the successful trial threshold
   m_ThresholdFilter = ThresholdType::New();
   m_ThresholdFilter->SetInput( m_Image );
   m_ThresholdFilter->SetOutsideValue( 255 );
   m_ThresholdFilter->SetInsideValue( 0 );
   m_ThresholdFilter->SetLowerThreshold( m_Threshold );
-  m_ThresholdFilter->SetUpperThreshold( 255 );
+  m_ThresholdFilter->SetUpperThreshold( 255 ); 
 }
 
 
@@ -403,7 +410,7 @@ FinalProjectApp
   return result;
 }
 
-
+// The radio button functions to choose the tracked feature
 void
 FinalProjectApp
 ::SetApplyFilter(bool useFilter)
@@ -453,6 +460,7 @@ FinalProjectApp
 	 m_CurrentFeature = 6;
 }
 
+// Load the settings file for which ever feature was selected to be tracked
 CvHaarClassifierCascade* 
 FinalProjectApp
 ::LoadHaarCascade(char* m_CascadeFilename)
@@ -465,6 +473,7 @@ FinalProjectApp
 	return m_Cascade;
 }
 
+// The function to actually track the feature
 CvRect
 FinalProjectApp
 ::TrackFeature(IplImage* inputImg, CvHaarClassifierCascade* m_Cascade)
@@ -477,14 +486,13 @@ FinalProjectApp
 
 	// Make sure a valid face was detected.
 	if (eyeRect.width > 0) {
-	  //uncomment for debugging
-		//printf("Detected a feature at (%d,%d)!\n", eyeRect.x, eyeRect.y);
-		if(m_attentionCounter < m_Threshold) {
+    if(m_attentionCounter < m_Threshold) {
 				m_attentionCounter++;
 			}
 			
     m_Detect[m_frame] = 1;
 	}
+  
   // No valid face was detected
   else {
     if(m_attentionCounter >0) {
@@ -507,6 +515,41 @@ FinalProjectApp
    m_ThresholdFilter->SetLowerThreshold( m_Threshold );
    m_attentionCounter = 0;
  }
+
+ // Create a log file from the data arrays
+void 
+FinalProjectApp
+::SaveLog()
+{
+  for(int i = 0; i < m_frame; i++) {
+      fprintf(m_logFile, "%f,%i,%i,%i,%i\n", m_TimeStamp[i], m_Trial[i], m_Feature[i], m_Detect[i], m_Epoch[i]);
+	}
+  // Reset the arrays to continue recording data
+  m_frame = 0;
+
+  std::cout << "Saved log file\n";
+}
+
+/** Create an artificial function to cycle through the epochs, simulating trials.
+Replace with signals from the control computer when possible. */
+void
+FinalProjectApp
+::AdvanceTrialEpoch(int nextEpoch)
+{
+	if(nextEpoch>=0 && nextEpoch<=2){
+		m_CurrentEpoch = nextEpoch;
+		//Since the Epoch has advanced, lets see if we should update the LCDs
+		if(m_CurrentEpoch == 0){
+			m_CurrentTrial++;
+			//Determine if we call this a success, subject to change
+			if(((double)m_attentionCounter) / ((double)m_Threshold) > 0.5) m_SuccessfulTrials++;
+			else m_FailedTrials++;
+			emit updateSuccessfulTrialsLCD(m_SuccessfulTrials);
+			emit updateFailedTrialsLCD(m_FailedTrials);
+		}
+	}
+	else printf("Error, invalid number for next Epoch (%i)",nextEpoch);
+}
 
  //*******************  Copied Code   ****************************
  // Perform face detection on the input image, using the given Haar Cascade.
@@ -649,37 +692,3 @@ CvRect FinalProjectApp
     return intersection; 
 } 
 
-void 
-FinalProjectApp
-::SaveLog()
-{
-  for(int i = 0; i < m_frame; i++) {
-      fprintf(m_logFile, "%f,%i,%i,%i,%i\n", m_TimeStamp[i], m_Trial[i], m_Feature[i], m_Detect[i], m_Stage[i]);
-	}
-  // Reset the arrays to continue recording data
-  m_frame = 0;
-
-  std::cout << "Saved log file\n";
-}
-
-void
-FinalProjectApp
-::AdvanceTrialStage(int nextStage)
-{
-	if(nextStage>=0 && nextStage<=2){
-		m_CurrentStage = nextStage;
-		//Since the stage has advanced, lets see if we should update the LCDs
-		if(m_CurrentStage == 0){
-			m_CurrentTrial++;
-			//Determine if we call this a success, subject to change
-			if(((double)m_attentionCounter) / ((double)m_Threshold) > 0.5) m_SuccessfulTrials++;
-			else m_FailedTrials++;
-			emit updateSuccessfulTrialsLCD(m_SuccessfulTrials);
-			emit updateFailedTrialsLCD(m_FailedTrials);
-		}
-	}
-	else printf("Error, invalid number for next stage (%i)",nextStage);
-
-	
-
-}
