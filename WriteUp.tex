@@ -409,7 +409,7 @@ Email: sdk29@pitt.edu}}
 
 \begin{abstract}
 %\boldmath
-The abstract goes here.
+This paper presents a technique to track various features of the face using a web-cam interface. The primary application of this development is to aid in the training of non-human primates. The program will use feature detection as an indication of whether or not the animal is paying attention and provide the researcher with real time information. The user can choose from 6 different features and the graphical user interface will display the number of experimental trials when the animal was inferred to have been paying attention and not paying attention. It will also provide a visual history of the past 100 trials to provide a qualitative measure of the animal's attentiveness. 
 \end{abstract}
 % IEEEtran.cls defaults to using nonbold math in the Abstract.
 % This preserves the distinction between vectors and scalars. However,
@@ -437,24 +437,23 @@ The abstract goes here.
 
 \section{Introduction}
 % no \IEEEPARstart
-This demo file is intended to serve as a ``starter file''
-for IEEE conference papers produced under \LaTeX\ using
-IEEEtran.cls version 1.7 and later.
+Scientists often use non-human primates to study neural activity \emph{in vivo} by training the animal to perform behavioral tasks and recording the extra-cellular potential of cortical neurons. However, training the animal to proficiently perform the behavioral task can be rather challenging. In a typical experimental set-up, the monkey sits in a recording room, is presented with a stimulus, and must repond to the stimulus. Outside noises, the lack of communication, low motivation, and fear all contribute to the difficutly of the training process. When training, the animal may either not recognize the stimulus, recognize the stimulus and respond incorrectly, or recognize the stimulus and respond correctly. 
+
+Training Goals
+	Total trials
+	Success rate
+	
+Statistics
+	Successful trials
+	Unsuccessful trials	
+	
+Identify null trials	
+
+Quantitative and qualitative
+
+When trying to teach, the attention of the pupil is essential. In monkey labs, it can often be a difficult process to teach a monkey new tasks. The timing of the goal and the reward is important for the monkey to experience reinforcement learning. If the monkey isn't paying attention, he may do the right thing, but at the wrong time, and not realize what he is doing right. For example, in my experiment, a robot presents an object to the monkey and he must grab it. The monkey begins the trial by pressing a start pad. In order to teach the task, we give liquid reward when he touches the start pad, when he reaches for the object, and when he successfully grabs the object. Sometimes the monkey will leave his hand on the start pad, receive his reward, but not ever look at the robot. In this case he is not learning and I do not want the robot to present the object or the monkey to be rewarded. Our proposal is to use the webcam to determine whether or not the monkey's face is pointing in the direction of the robot. If so, he is 'paying attention.' After this is refined, we will try and track the eyes to see exactly where he is looking. This will interface with the robot control to abort the task if it determines the monkey is not 'paying attention' and improve the learning of the monkey.
 % You must have at least 2 lines in the paragraph with the drop letter
 % (should never be an issue)
-I wish you the best of success.
-
-\hfill mds
- 
-\hfill January 11, 2007
-
-\subsection{Subsection Heading Here}
-Subsection text here.
-
-
-\subsubsection{Subsubsection Heading Here}
-Subsubsection text here.
-
 
 % An example of a floating figure using the graphicx package.
 % Note that \label must occur AFTER (or within) \caption.
@@ -538,7 +537,24 @@ Subsubsection text here.
 % footnotes above bottom floats. This can be corrected via the \fnbelowfloat
 % command of the stfloats package.
 
+\section{Methods}
+Our main technique will be to use feature detection as an indication of the animal's attention. Using OpenCV, we will interface with a web cam and capture and image at 3 Hz. The feature detection code captures the image and compares it to a database of positive matches to determine if the feature is detected. If the feature is detected, it draws a red rectangle around it.
 
+Feature detection
+
+Positive/negative trial
+	Green/red box
+	Update the running tally
+	
+Percent of positive trials for attention
+
+Log file	
+
+\section{Results}
+The results go here.
+
+\section{Discussion}
+The discussion goes here.
 
 \section{Conclusion}
 The conclusion goes here.

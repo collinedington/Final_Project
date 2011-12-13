@@ -33,7 +33,7 @@
     </item>
     <item row="0" column="0">
      <layout class="QGridLayout" name="gridLayout_2">
-      <item row="1" column="0">
+      <item row="1" column="1">
        <widget class="QRadioButton" name="radioButtonEyePairBig">
         <property name="text">
          <string>Eye Pair (Big)</string>
@@ -43,28 +43,28 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
+      <item row="2" column="1">
        <widget class="QRadioButton" name="radioButtonEyePairSmall">
         <property name="text">
          <string>Eye Pair (Small)</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
+      <item row="3" column="1">
        <widget class="QRadioButton" name="radioButtonFrontalFace">
         <property name="text">
          <string>Frontal Face</string>
         </property>
        </widget>
       </item>
-      <item row="4" column="0">
+      <item row="4" column="1">
        <widget class="QRadioButton" name="radioButtonLeftRightEye">
         <property name="text">
          <string>Left/Right Eye</string>
         </property>
        </widget>
       </item>
-      <item row="8" column="0">
+      <item row="11" column="1">
        <spacer name="verticalSpacer">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
@@ -77,7 +77,7 @@
         </property>
        </spacer>
       </item>
-      <item row="0" column="0">
+      <item row="0" column="1">
        <spacer name="verticalSpacer_2">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
@@ -90,21 +90,21 @@
         </property>
        </spacer>
       </item>
-      <item row="5" column="0">
+      <item row="5" column="1">
        <widget class="QRadioButton" name="radioButtonMouth">
         <property name="text">
          <string>Mouth</string>
         </property>
        </widget>
       </item>
-      <item row="6" column="0">
+      <item row="6" column="1">
        <widget class="QRadioButton" name="radioButtonNose">
         <property name="text">
          <string>Nose</string>
         </property>
        </widget>
       </item>
-      <item row="7" column="0">
+      <item row="7" column="1">
        <widget class="QPushButton" name="saveButton">
         <property name="text">
          <string>Save Log File</string>
@@ -114,6 +114,45 @@
         </property>
         <property name="checked">
          <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="1">
+       <widget class="QTextBrowser" name="PositiveTrials">
+        <property name="minimumSize">
+         <size>
+          <width>243</width>
+          <height>79</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>243</width>
+          <height>115</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="1">
+       <widget class="QTextBrowser" name="NegativeTrials">
+        <property name="maximumSize">
+         <size>
+          <width>243</width>
+          <height>136</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item row="10" column="1">
+       <widget class="QTextBrowser" name="PositivePercent">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>500</width>
+          <height>16777215</height>
+         </size>
         </property>
        </widget>
       </item>
