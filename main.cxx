@@ -30,5 +30,7 @@ int main( int argc, char** argv )
   mainWindow->repaint();
   
   std::cout << "Starting app event loop" << std::endl;
+
+
   return app.exec();
 }

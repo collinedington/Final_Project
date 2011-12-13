@@ -56,6 +56,8 @@ FinalProjectWindow
   connect(radioButtonNose, SIGNAL( toggled(bool) ), m_App, SLOT( SetRadioButtonNose(bool)) );
   
   connect(m_App, SIGNAL( updateAttentionBar(int)), attentionBar , SLOT( setValue(int) ));
+  connect(m_App, SIGNAL( updateSuccessfulTrialsLCD(int) ), lcdSuccessfulTrials,SLOT( display(int) ));
+  connect(m_App, SIGNAL( updateFailedTrialsLCD(int) ), lcdFailedTrials,SLOT( display(int) ));
 
   // Connect signals/slots to the app
   connect(m_App, SIGNAL( SendImage(QImage) ), this, SLOT( OnReceiveImage(QImage) ));
