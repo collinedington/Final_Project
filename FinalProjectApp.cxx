@@ -58,12 +58,12 @@ FinalProjectApp
   m_HaarEyePairSmall = LoadHaarCascade("haarcascade_mcs_eyepair_small.xml");
   m_HaarEyePairBig = LoadHaarCascade("haarcascade_mcs_eyepair_big.xml");
   m_HaarFrontalFace = LoadHaarCascade("haarcascade_frontalface_default.xml");
-  m_HaarMouth = LoadHaarCascade("haarcascade_mcs_mouth.xml");
-  m_HaarNose = LoadHaarCascade("haarcascade_mcs_nose.xml");
+  //m_HaarMouth = LoadHaarCascade("haarcascade_mcs_mouth.xml");
+  //m_HaarNose = LoadHaarCascade("haarcascade_mcs_nose.xml");
 
   // Initialize a log file with hard coded headers
   m_logFile = fopen("Log File.csv","w");
-  fprintf(m_logFile, "%s,%s,%s,%s,%s\n", "Time", "Trial", "Feature", "Detect", "Stage");
+  fprintf(m_logFile, "%s,%s,%s,%s,%s\n", "Time", "Trial", "Feature", "Detect", "Epoch");
 
   // Initialize the frame index for the arrays
   m_frame = 0;
@@ -113,7 +113,7 @@ FinalProjectApp
 
   // Append feature definitions and stage numbers to the log file
   fprintf(m_logFile, "\n%s,\t%s,\t%s,\t%s,\t%s,\t%s", "bigEyePair = 1", "smallEyePair = 2", "frontalFace = 3", "leftRightEye = 4", "mouth = 5", "nose = 6");
-  fprintf(m_logFile, "\n%s,\t%s,\t%s","Stage 0 = Intertrial", "Stage 1 = Button Press", "Stage 2 = Reach");
+  fprintf(m_logFile, "\n%s,\t%s,\t%s","Epoch 0 = Intertrial", "Epoch 1 = Button Press", "Epoch 2 = Reach");
   fclose(m_logFile);
 }
 
