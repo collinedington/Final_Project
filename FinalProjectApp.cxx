@@ -507,7 +507,7 @@ FinalProjectApp
 	return eyeRect;
 }
 
- void
+void
 FinalProjectApp
 ::SetThreshold(int threshold)
  {

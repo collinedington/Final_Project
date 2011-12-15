@@ -127,12 +127,15 @@
 % *** GRAPHICS RELATED PACKAGES ***
 %
 \ifCLASSINFOpdf
-  % \usepackage[pdftex]{graphicx}
+  \usepackage{graphicx}
   % declare the path(s) where your graphic files are
-  % \graphicspath{{../pdf/}{../jpeg/}}
+  \graphicspath{C:/Users/Scott/Desktop/Final_Project/}
+  
+  %C:/Users/SCOTT/Dropbox/Fall 2011/Computer Applications in Bioengineering/FinalProject/FinalProjectDocumentation/}
+  
   % and their extensions so you won't have to specify these with
   % every instance of \includegraphics
-  % \DeclareGraphicsExtensions{.pdf,.jpeg,.png}
+  %\DeclareGraphicsExtensions{.eps,.png}
 \else
   % or other class option (dvipsone, dvipdf, if not using dvips). graphicx
   % will default to the driver specified in the system graphics.cfg if no
@@ -347,12 +350,14 @@
 % correct bad hyphenation here
 \hyphenation{op-tical net-works semi-conduc-tor}
 
+\usepackage{color}
+
 
 \begin{document}
 %
 % paper title
 % can use linebreaks \\ within to get better formatting as desired
-\title{Feature tracking as an indication of attention}
+\title{Feature detection as an indication of attention}
 
 % author names and affiliations
 % use a multiple column layout for up to three different
@@ -409,7 +414,7 @@ Email: sdk29@pitt.edu}}
 
 \begin{abstract}
 %\boldmath
-This paper presents a technique to track various features of the face using a web-cam interface. The primary application of this development is to aid in the training of non-human primates. The program will use feature detection as an indication of whether or not the animal is paying attention and provide the researcher with real time information. The user can choose from 6 different features and the graphical user interface will display the number of experimental trials when the animal was inferred to have been paying attention and not paying attention. It will also provide a visual history of the past 100 trials to provide a qualitative measure of the animal's attentiveness. 
+This paper presents a program which captures images from a web cam, detects human facial features, displays the results via a graphical user interface (GUI), and saves the data to a file. A case study highlights the program's specific application to non-human primate training in behavioral experiments and operates under the assumption that the animal is paying attention during positive feature detection. The user can choose to detect 1 of 6 different features and define the attention threshold per trial, which determines the percent positive frames constituting a trial in which the animal was inferred to have been paying attention. The GUI displays real-time data from each trial and the log file saves data from every frame.
 \end{abstract}
 % IEEEtran.cls defaults to using nonbold math in the Abstract.
 % This preserves the distinction between vectors and scalars. However,
@@ -437,21 +442,10 @@ This paper presents a technique to track various features of the face using a we
 
 \section{Introduction}
 % no \IEEEPARstart
-Scientists often use non-human primates to study neural activity \emph{in vivo} by training the animal to perform behavioral tasks and recording the extra-cellular potential of cortical neurons. However, training the animal to proficiently perform the behavioral task can be rather challenging. In a typical experimental set-up, the monkey sits in a recording room, is presented with a stimulus, and must repond to the stimulus. Outside noises, the lack of communication, low motivation, and fear all contribute to the difficutly of the training process. When training, the animal may either not recognize the stimulus, recognize the stimulus and respond incorrectly, or recognize the stimulus and respond correctly. 
+Scientists often use non-human primates to study neural activity \emph{in vivo} by training the animal to perform behavioral tasks and recording the extra-cellular potential of cortical neurons. In a typical experimental set-up, the researcher trains the animal to recognize a stimulus and acquire the skills necessary to perform the desired behavioral response. Before collecting experimental data, the animal must demonstrate a certain level of task proficiency, which is currently evaluated according to the total number of trials and success rate. However, proficiency is a function of both skill and attention, a distinction which this method does not address. The purpose of this particular application of feature detection is to provide an improved evaluation of task proficiency. 
 
-Training Goals
-	Total trials
-	Success rate
-	
-Statistics
-	Successful trials
-	Unsuccessful trials	
-	
-Identify null trials	
+The most common method calculates success rate as a function of successfull and unsuccessful trials. A successful trial occurs when the animal recognizes the stimulus and correctly performs the behavioral response. However, unsuccessful trials can fall into one of two categories. On one hand, the animal may recognize the stimulus but fail due to an unskilled response. On the other hand, the animal may become distracted and fail by not recognizing the stimulus. Both responses decrease the success rate and increase the total trials. As a result, the researcher does not have enough information to determine whether the lack of proficiency is related to skill or attention. The implementation of feature detection distinguishes unskilled and distracted responses. Our goal is to provide the researcher with a qualitative analysis of the attention of the monkey to adjust training strategies within the session and quantitative data that can be analyzed after the session to determine strategies for future session.
 
-Quantitative and qualitative
-
-When trying to teach, the attention of the pupil is essential. In monkey labs, it can often be a difficult process to teach a monkey new tasks. The timing of the goal and the reward is important for the monkey to experience reinforcement learning. If the monkey isn't paying attention, he may do the right thing, but at the wrong time, and not realize what he is doing right. For example, in my experiment, a robot presents an object to the monkey and he must grab it. The monkey begins the trial by pressing a start pad. In order to teach the task, we give liquid reward when he touches the start pad, when he reaches for the object, and when he successfully grabs the object. Sometimes the monkey will leave his hand on the start pad, receive his reward, but not ever look at the robot. In this case he is not learning and I do not want the robot to present the object or the monkey to be rewarded. Our proposal is to use the webcam to determine whether or not the monkey's face is pointing in the direction of the robot. If so, he is 'paying attention.' After this is refined, we will try and track the eyes to see exactly where he is looking. This will interface with the robot control to abort the task if it determines the monkey is not 'paying attention' and improve the learning of the monkey.
 % You must have at least 2 lines in the paragraph with the drop letter
 % (should never be an issue)
 
@@ -468,15 +462,6 @@ When trying to teach, the attention of the pupil is essential. In monkey labs, i
 % option should be used if it is desired that the figures are to be
 % displayed while in draft mode.
 %
-%\begin{figure}[!t]
-%\centering
-%\includegraphics[width=2.5in]{myfigure}
-% where an .eps filename suffix will be assumed under latex, 
-% and a .pdf suffix will be assumed for pdflatex; or what has been declared
-% via \DeclareGraphicsExtensions.
-%\caption{Simulation Results}
-%\label{fig_sim}
-%\end{figure}
 
 % Note that IEEE typically puts floats only at the top, even when this
 % results in a large percentage of a column being occupied by floats.
@@ -505,21 +490,21 @@ When trying to teach, the attention of the pupil is essential. In monkey labs, i
 % reference/describe all of them (a), (b), etc., within the main caption.
 
 
-% An example of a floating table. Note that, for IEEE style tables, the 
-% \caption command should come BEFORE the table. Table text will default to
-% \footnotesize as IEEE normally uses this smaller font for tables.
-% The \label must come after \caption as always.
-%
+%An example of a floating table. Note that, for IEEE style tables, the 
+%\caption command should come BEFORE the table. Table text will default to
+%\footnotesize as IEEE normally uses this smaller font for tables.
+%The \label must come after \caption as always.
+
 %\begin{table}[!t]
-%% increase table row spacing, adjust to taste
+%%increase table row spacing, adjust to taste
 %\renewcommand{\arraystretch}{1.3}
-% if using array.sty, it might be a good idea to tweak the value of
-% \extrarowheight as needed to properly center the text within the cells
+%%if using array.sty, it might be a good idea to tweak the value of
+%%\extrarowheight as needed to properly center the text within the cells
 %\caption{An Example of a Table}
 %\label{table_example}
 %\centering
-%% Some packages, such as MDW tools, offer better commands for making tables
-%% than the plain LaTeX2e tabular which is used here.
+%%Some packages, such as MDW tools, offer better commands for making tables
+%%than the plain LaTeX2e tabular which is used here.
 %\begin{tabular}{|c||c|}
 %\hline
 %One & Two\\
@@ -538,27 +523,60 @@ When trying to teach, the attention of the pupil is essential. In monkey labs, i
 % command of the stfloats package.
 
 \section{Methods}
-Our main technique will be to use feature detection as an indication of the animal's attention. Using OpenCV, we will interface with a web cam and capture and image at 3 Hz. The feature detection code captures the image and compares it to a database of positive matches to determine if the feature is detected. If the feature is detected, it draws a red rectangle around it.
-
-Feature detection
-
-Positive/negative trial
-	Green/red box
-	Update the running tally
-	
-Percent of positive trials for attention
-
-Log file	
+The tracking program utilizes and extends numerous open source libraries, including OpenCV, Qt, and ITK to capture and process images through a graphical user interface.  After VGA color images are captured, they are converted to grayscale and facial features are detected using Haar classifier cascades and the cvHaarDetectObjects() function included with OpenCV.  This function utilizes Haar wavelets (similar to Fourier transforms) to detect features based on a precompiled set of data contained in an .xml file.  In addition to .xml files for basic facial features, OpenCV also includes a Haar training utility that can create custom object classifiers using a large data set of images that are positive and negative for the desired feature.  While this approach requires large numbers of image files and intensive processing power, it affords researchers the flexibility to track any definable feature.  After tracking, a rectangle is superimposed to indicate the location of the selected feature.  The program records the number of successfully tracked frames, as well as qualitatively determining whether the test animal was paying attention in a given trial (based on the slider value).  This information is displayed graphically via trial counters and an attention progress bar.  Variables are also saved to a comma-separated (.csv) log file for post-processing.  The log filele includes the timestamp, trial number, feature being tracked, whether or not the feature was detected, and the time epoch.
 
 \section{Results}
-The results go here.
+When the checkbox is selected, the current program successfully tracks all 6 features and displays a red rectangle superimposed around the feature on the captured image. After each frame, the program stores the time stamp in milliseconds, the current trial, the feature being detected, the detection result, and the current epoch in separate dynamic arrays indexed by frame number. The stored variables and the corresponding data types are summarized in table \ref{tab:data types}. The features are assigned numbers, with $-1$ corresponding to no feature detection and positive numbers corresponding to the order on the GUI. The detection returns a $1$ for a success, $0$ for a failure, and $-1$ if the feature detection is turned off. Currently, 3 trial epoch are recorded, beginning with 0, but this parameter could be modified for different experiments.
+
+\begin{table}[h]
+%increase table row spacing, adjust to taste
+\renewcommand{\arraystretch}{1.3}
+%if using array.sty, it might be a good idea to tweak the value of
+%\extrarowheight as needed to properly center the text within the cells
+\caption{Stored data types}
+\label{tab:data types}
+\centering
+%Some packages, such as MDW tools, offer better commands for making tables
+%than the plain LaTeX2e tabular which is used here.
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+Time stamp & Current trial & Feature & Detect & Epoch\\
+\hline
+\color{blue}{double} & \color{blue}int & \color{blue}int & \color{blue}int & \color{blue}int\\
+\hline
+\end{tabular}
+\end{table}
+
+For testing purposes, the program calls a random number generator at the end of each frame to simulate cycling through three trial epochs. A trial ends at the conclusion of the third epoch. After each trial, the program calculates the number of frames in which the feature was detected during that trial and compares it to the attention threshold defined by the slider on the GUI in \ref{fig:current gui}. If the number of positive frames is greater than the threshold, the animal was inferred to have been paying attention and the successful trial counter increases by 1. If lower than threshold, the unsuccessful trial counter increases by 1. The Save Log button generates a .csv log file with columns corresponding to the recorded variables and rows corresponding to the captured frames. The file is also automatically generated upon exit of the program. When the recorded variables are written to the file, the frame index resets. If the frame numbers reach 1000, the pre-allocated size of the arrays, the data will automatically be written to file and the frame index reset. The current GUI implimentation is displayed in figure \ref{fig:current gui}.
+ 
+\begin{figure}[h]
+\centering
+\includegraphics[width=3.0in]{GUIcurrent}
+\caption{Current GUI display}
+\label{fig:current gui}
+\end{figure}
 
 \section{Discussion}
-The discussion goes here.
+The program accomplishes the goal of providing the user with both a qualitative and quantitative assessment of human attention. The GUI provides trial by trial data in real time to adjust training methods within the session. The log file provides frame by frame data off-line to adjust training methods for future trials. However, the feature detection algorithm does not detect non-human primate features. As mentioned in the methods, the feature detection algorithm relies on .xml files from a large data set of positive and negative features. The files used in this program are compiled from human data, and it is assumed that similar files compiled from non-human primate data would be sufficient to detect animal features.
+
+When the algorithm successfully detects a feature, the captured frame rate is on average 3 Hz, as defined in the Qt code. However, if the algorithm is unable to detect a feature, the captured frame rate slows down significantly. This is a problem even when compiled in release mode. The current algorithm spends too much time attempting to find the desired feature instead of labeling it as a negative frame and capturing a new image. This is a bug that could be fixed in a future version.
+
+The transition between trial epochs and thus from trial to trial is currently mediated by a random number generator. In order to receive the experimental signal to change trial epochs from the controller machine, the current code would need to be incorporated into the custom software connecting the three experimental machines. It was determined that this would not be feasible within the timeline of this project. However, the custom software does include a number of C++ modules and it would be possible to subscribe our code as an additional module.
 
 \section{Conclusion}
-The conclusion goes here.
+Our program uses human feature tracking as a successful proof-of-concept to indicate attention. A future version will be optimized for non-human primate features and will provide a graphical history of the past 100 trials to compliment the counters on the current GUI. This will enable the user to determine the pattern of attention for recent history.
 
+A final study will be needed to test for false positives and false negatives. However, in this particular application, our program is merely a training tool and exact statistical accuracy is not required. Instead, the final metric will be judged by the efficacy with which the researcher can train the animal.
+
+% % Use this to reference the figure number of the figure below.
+%\ref{fig:desired gui}
+% % A figure showing the qualitative past 100 trials, if needed
+%\begin{figure}[h]
+%\centering
+%\includegraphics[width=3.0in]{GUIgoal}
+%\caption{Desired GUI display}
+%\label{fig:desired gui}
+%\end{figure}
 
 
 
@@ -567,10 +585,7 @@ The conclusion goes here.
 
 % use section* for acknowledgement
 \section*{Acknowledgment}
-
-
-The authors would like to thank...
-
+The authors would like to thank Damion Shelton, for detailed lecture notes and providing the code from which this program was modified. 
 
 
 
@@ -597,13 +612,13 @@ The authors would like to thank...
 % <OR> manually copy in the resultant .bbl file
 % set second argument of \begin to the number of references
 % (used to reserve space for the reference number labels box)
-\begin{thebibliography}{1}
-
-\bibitem{IEEEhowto:kopka}
-H.~Kopka and P.~W. Daly, \emph{A Guide to \LaTeX}, 3rd~ed.\hskip 1em plus
-  0.5em minus 0.4em\relax Harlow, England: Addison-Wesley, 1999.
-
-\end{thebibliography}
+%\begin{thebibliography}{1}
+%
+%\bibitem{IEEEhowto:kopka}
+%H.~Kopka and P.~W. Daly, \emph{A Guide to \LaTeX}, 3rd~ed.\hskip 1em plus
+%  0.5em minus 0.4em\relax Harlow, England: Addison-Wesley, 1999.
+%
+%\end{thebibliography}
 
 
 
